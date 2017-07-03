@@ -7,19 +7,15 @@ using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Sockets.Http.Internal
 {
-    public static class NoThrowTaskExtensions
+    public static class TaskExtensions
     {
-        public static NoThrowAwaiter NoThrowInternal(this Task task)
-        {
-            return new NoThrowAwaiter(task);
-        }
         public static async Task NoThrow(this Task task)
         {
             await new NoThrowAwaiter(task);
         }
     }
 
-    public struct NoThrowAwaiter : ICriticalNotifyCompletion
+    struct NoThrowAwaiter : ICriticalNotifyCompletion
     {
         private readonly Task _task;
         public NoThrowAwaiter(Task task) { _task = task; }

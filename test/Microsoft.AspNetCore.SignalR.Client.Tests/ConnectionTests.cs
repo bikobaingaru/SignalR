@@ -466,29 +466,25 @@ namespace Microsoft.AspNetCore.Sockets.Client.Tests
                 });
 
 
-            var callbackInvokedTcs = new TaskCompletionSource<object>();
+            var blockReceiveCallbackTcs = new TaskCompletionSource<object>();
             var closedTcs = new TaskCompletionSource<object>();
 
             var connection = new HttpConnection(new Uri("http://fakeuri.org/"), new TestTransportFactory(mockTransport.Object), loggerFactory: null, httpMessageHandler: mockHttpHandler.Object);
             connection.Received +=
                 async m =>
                 {
-                    await Task.Delay(6000);
-                    callbackInvokedTcs.SetResult(null);
-                    await closedTcs.Task;
+                    await blockReceiveCallbackTcs.Task;
                 };
-
+            connection.Closed += _ => {
+                closedTcs.SetResult(null);
+                return Task.CompletedTask;
+            };
+                
             await connection.StartAsync();
-            channel.Out.TryWrite(Array.Empty<byte>());
-
-            // Ensure that the Received callback has been called before attempting the second write
-            await callbackInvokedTcs.Task;
             channel.Out.TryWrite(Array.Empty<byte>());
 
             // Ensure that SignalR isn't blocked by the receive callback
             Assert.False(channel.In.TryRead(out var message));
-
-            closedTcs.SetResult(null);
 
             await connection.DisposeAsync();
         }
@@ -530,21 +526,15 @@ namespace Microsoft.AspNetCore.Sockets.Client.Tests
             connection.Received +=
                 m =>
                 {
-                    callbackInvokedTcs.SetResult(null);
                     throw new OperationCanceledException();
                 };
 
             await connection.StartAsync();
             channel.Out.TryWrite(Array.Empty<byte>());
 
-            // Ensure that the Received callback has been called before attempting the second write
-            await callbackInvokedTcs.Task;
-            channel.Out.TryWrite(Array.Empty<byte>());
-
             // Ensure that SignalR isn't blocked by the receive callback
             Assert.False(channel.In.TryRead(out var message));
 
-            closedTcs.SetResult(null);
             await connection.DisposeAsync();
         }
 
