@@ -43,7 +43,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         public Task StartAsync(Uri url, Channel<byte[], SendMessage> application)
         {
-            _logger.StartTransport();
+            _logger.StartTransport("");
 
             _application = application;
             var sendTask = SendUtils.SendMessages(url, _application, _httpClient, _transportCts, _logger);
@@ -84,7 +84,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
                     {
                         if (input.IsEmpty && result.IsCompleted)
                         {
-                            _logger.EventStreamEnded();
+                            _logger.EventStreamEnded("");
                             break;
                         }
 

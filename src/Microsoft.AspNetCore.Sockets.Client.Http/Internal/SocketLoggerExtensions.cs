@@ -7,8 +7,8 @@ namespace Microsoft.AspNetCore.Sockets.Internal
     internal static class SocketLoggerExtensions
     {
         // Category: Shared with LongPollingTransport, WebSocketsTransport and ServerSentEventsTransport
-        private static readonly Action<ILogger, DateTime, Exception> _startTransport =
-            LoggerMessage.Define<DateTime>(LogLevel.Information, 0, "{time}: Starting transport.");
+        private static readonly Action<ILogger, DateTime, string, Exception> _startTransport =
+            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 0, "{time}: Connection Id {connectionId}: Starting transport.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _transportStopped =
             LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 1, "{time}: Connection Id {connectionId}: Transport stopped.");
@@ -17,42 +17,41 @@ namespace Microsoft.AspNetCore.Sockets.Internal
             LoggerMessage.Define<DateTime, string>(LogLevel.Information, 2, "{time}: Connection Id {connectionId}: Starting receive loop.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _receiveStopped =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 8, "{time}: Connection Id {connectionId}: Receive loop stopped.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 3, "{time}: Connection Id {connectionId}: Receive loop stopped.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _receiveCanceled =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 7, "{time}: Connection Id {connectionId}: Receive loop canceled.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 4, "{time}: Connection Id {connectionId}: Receive loop canceled.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _transportStopping =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 3, "{time}: Connection Id {connectionId}: Transport is stopping.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 5, "{time}: Connection Id {connectionId}: Transport is stopping.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _sendStarted =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 9, "{time}: Connection Id {connectionId}: Starting the send loop.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 6, "{time}: Connection Id {connectionId}: Starting the send loop.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _sendStopped =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 14, "{time}: Connection Id {connectionId}: Send loop stopped.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 7, "{time}: Connection Id {connectionId}: Send loop stopped.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _sendCanceled =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 13, "{time}: Connection Id {connectionId}: Send loop canceled.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 8, "{time}: Connection Id {connectionId}: Send loop canceled.");
 
         // Category: WebSocketsTransport
-
         private static readonly Action<ILogger, DateTime, string, WebSocketCloseStatus?, Exception> _webSocketClosed =
-            LoggerMessage.Define<DateTime, string, WebSocketCloseStatus?>(LogLevel.Information, 4, "{time}: Connection Id {connectionId}: Websocket closed by the server. Close status {closeStatus}.");
+            LoggerMessage.Define<DateTime, string, WebSocketCloseStatus?>(LogLevel.Information, 9, "{time}: Connection Id {connectionId}: Websocket closed by the server. Close status {closeStatus}.");
 
         private static readonly Action<ILogger, DateTime, string, WebSocketMessageType, int, bool, Exception> _messageReceived =
-            LoggerMessage.Define<DateTime, string, WebSocketMessageType, int, bool>(LogLevel.Debug, 5, "{time}: Connection Id {connectionId}: Message received. Type: {messageCount}, size: {count}, EndOfMessage: {endOfMessage}.");
+            LoggerMessage.Define<DateTime, string, WebSocketMessageType, int, bool>(LogLevel.Debug, 10, "{time}: Connection Id {connectionId}: Message received. Type: {messageCount}, size: {count}, EndOfMessage: {endOfMessage}.");
 
         private static readonly Action<ILogger, DateTime, string, int, Exception> _messageToApp =
-            LoggerMessage.Define<DateTime, string, int>(LogLevel.Information, 6, "{time}: Connection Id {connectionId}: Passing message to application. Payload size: {count}.");
+            LoggerMessage.Define<DateTime, string, int>(LogLevel.Information, 11, "{time}: Connection Id {connectionId}: Passing message to application. Payload size: {count}.");
 
         private static readonly Action<ILogger, DateTime, string, int, Exception> _receivedFromApp =
-            LoggerMessage.Define<DateTime, string, int>(LogLevel.Debug, 10, "{time}: Connection Id {connectionId}: Received message from application. Payload size: {count}.");
+            LoggerMessage.Define<DateTime, string, int>(LogLevel.Debug, 12, "{time}: Connection Id {connectionId}: Received message from application. Payload size: {count}.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _sendMessageCanceled =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 11, "{time}: Connection Id {connectionId}: Sending a message canceled.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Information, 13, "{time}: Connection Id {connectionId}: Sending a message canceled.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _errorSendingMessage =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Error, 12, "{time}: Connection Id {connectionId}: Error while sending a message.");
+            LoggerMessage.Define<DateTime, string>(LogLevel.Error, 14, "{time}: Connection Id {connectionId}: Error while sending a message.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _closingWebSocket =
             LoggerMessage.Define<DateTime, string>(LogLevel.Information, 15, "{time}: Connection Id {connectionId}: Closing WebSocket.");
@@ -61,22 +60,22 @@ namespace Microsoft.AspNetCore.Sockets.Internal
             LoggerMessage.Define<DateTime, string>(LogLevel.Information, 16, "{time}: Connection Id {connectionId}: Closing webSocket failed.");
 
         // Category: ServerSentEventsTransport
-        private static readonly Action<ILogger, DateTime, Exception> _eventStreamEnded =
-            LoggerMessage.Define<DateTime>(LogLevel.Debug, 6, "{time}: Server-Sent Event Stream ended.");
+        private static readonly Action<ILogger, DateTime, string, Exception> _eventStreamEnded =
+            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 9, "{time}: Connection Id {connectionId}: Server-Sent Event Stream ended.");
 
         // Category: LongPollingTransport
-        private static readonly Action<ILogger, DateTime, Exception> _closingConnection =
-            LoggerMessage.Define<DateTime>(LogLevel.Debug, 6, "{time}: The server is closing the connection.");
+        private static readonly Action<ILogger, DateTime, string, Exception> _closingConnection =
+            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 9, "{time}: Connection Id {connectionId}: The server is closing the connection.");
 
-        private static readonly Action<ILogger, DateTime, Exception> _receivedMessages =
-            LoggerMessage.Define<DateTime>(LogLevel.Debug, 6, "{time}: Received messages from the server.");
+        private static readonly Action<ILogger, DateTime, string, Exception> _receivedMessages =
+            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 10, "{time}: Connection Id {connectionId}: Received messages from the server.");
 
-        private static readonly Action<ILogger, DateTime, Uri, Exception> _errorPolling =
-            LoggerMessage.Define<DateTime, Uri>(LogLevel.Error, 6, "{time}: Error while polling '{pollUrl}'.");
+        private static readonly Action<ILogger, DateTime, string, Uri, Exception> _errorPolling =
+            LoggerMessage.Define<DateTime, string, Uri>(LogLevel.Error, 11, "{time}: Connection Id {connectionId}: Error while polling '{pollUrl}'.");
 
         // Category: HttpConnection
-        private static readonly Action<ILogger, DateTime, string, Exception> _httpConnectionStarting =
-            LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 0, "{time}: Connection Id {connectionId}: Starting connection.");
+        private static readonly Action<ILogger, DateTime, Exception> _httpConnectionStarting =
+            LoggerMessage.Define<DateTime>(LogLevel.Debug, 0, "{time}: Starting connection.");
 
         private static readonly Action<ILogger, DateTime, string, Exception> _httpConnectionClosed =
             LoggerMessage.Define<DateTime, string>(LogLevel.Debug, 1, "{time}: Connection Id {connectionId}: Connection was closed from a different thread.");
@@ -132,11 +131,11 @@ namespace Microsoft.AspNetCore.Sockets.Internal
         private static readonly Action<ILogger, DateTime, string, Exception> _stoppingClient =
             LoggerMessage.Define<DateTime, string>(LogLevel.Information, 18, "{time}: Connection Id {connectionId}: Stopping client.");
 
-        public static void StartTransport(this ILogger logger)
+        public static void StartTransport(this ILogger logger, string connectionId)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
-                _startTransport(logger, DateTime.Now, null);
+                _startTransport(logger, DateTime.Now, connectionId, null);
             }
         }
 
@@ -268,43 +267,43 @@ namespace Microsoft.AspNetCore.Sockets.Internal
             }
         }
 
-        public static void EventStreamEnded(this ILogger logger)
+        public static void EventStreamEnded(this ILogger logger, string connectionId)
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                _eventStreamEnded(logger, DateTime.Now, null);
+                _eventStreamEnded(logger, DateTime.Now, connectionId, null);
             }
         }
 
-        public static void ClosingConnection(this ILogger logger)
+        public static void ClosingConnection(this ILogger logger, string connectionId)
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                _closingConnection(logger, DateTime.Now, null);
+                _closingConnection(logger, DateTime.Now, connectionId, null);
             }
         }
 
-        public static void ReceivedMessages(this ILogger logger)
+        public static void ReceivedMessages(this ILogger logger, string connectionId)
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                _receivedMessages(logger, DateTime.Now, null);
+                _receivedMessages(logger, DateTime.Now, connectionId, null);
             }
         }
 
-        public static void ErrorPolling(this ILogger logger, Uri pollUrl, Exception exception)
+        public static void ErrorPolling(this ILogger logger, string connectionId, Uri pollUrl, Exception exception)
         {
             if (logger.IsEnabled(LogLevel.Error))
             {
-                _errorPolling(logger, DateTime.Now, pollUrl, exception);
+                _errorPolling(logger, DateTime.Now, connectionId, pollUrl, exception);
             }
         }
 
-        public static void HttpConnectionStarting(this ILogger logger, string connectionId)
+        public static void HttpConnectionStarting(this ILogger logger)
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                _httpConnectionStarting(logger, DateTime.Now, connectionId, null);
+                _httpConnectionStarting(logger, DateTime.Now, null);
             }
         }
 

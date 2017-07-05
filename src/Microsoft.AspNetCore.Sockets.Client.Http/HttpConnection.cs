@@ -112,7 +112,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         private async Task StartAsyncInternal()
         {
-            _logger.HttpConnectionStarting(_connectionId);
+            _logger.HttpConnectionStarting();
 
             try
             {

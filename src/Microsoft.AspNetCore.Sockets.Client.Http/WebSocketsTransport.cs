@@ -38,8 +38,6 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         public async Task StartAsync(Uri url, Channel<byte[], SendMessage> application)
         {
-            _logger.StartTransport();
-
             if (url == null)
             {
                 throw new ArgumentNullException(nameof(url));
@@ -53,6 +51,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
             _application = application;
 
             await Connect(url);
+            _logger.StartTransport(_connectionId);
             var sendTask = SendMessages(url);
             var receiveTask = ReceiveMessages(url);
 

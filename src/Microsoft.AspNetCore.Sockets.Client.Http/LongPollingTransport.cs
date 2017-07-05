@@ -37,7 +37,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         public Task StartAsync(Uri url, Channel<byte[], SendMessage> application)
         {
-            _logger.StartTransport();
+            _logger.StartTransport("");
 
             _application = application;
 
@@ -86,14 +86,14 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
                     if (response.StatusCode == HttpStatusCode.NoContent || cancellationToken.IsCancellationRequested)
                     {
-                        _logger.ClosingConnection();
+                        _logger.ClosingConnection("");
 
                         // Transport closed or polling stopped, we're done
                         break;
                     }
                     else
                     {
-                        _logger.ReceivedMessages();
+                        _logger.ReceivedMessages("");
 
                         // Until Pipeline starts natively supporting BytesReader, this is the easiest way to do this.
                         var payload = await response.Content.ReadAsByteArrayAsync();
@@ -117,7 +117,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
             }
             catch (Exception ex)
             {
-                _logger.ErrorPolling(pollUrl, ex);
+                _logger.ErrorPolling("", pollUrl, ex);
                 throw;
             }
             finally
