@@ -200,7 +200,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
         public async Task DynamicHubCanSendAndReceiveMessage(IHubProtocol protocol)
         {
             var loggerFactory = CreateLogger();
-            const string originalMessage = "SignalR";
+            const string originalMessage = "Hello";
 
             var httpConnection = new HttpConnection(new Uri("http://test/dynamic"), TransportType.LongPolling, loggerFactory, _testServer.CreateHandler());
             var connection = new HubConnection(httpConnection, protocol, loggerFactory);
@@ -208,13 +208,16 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             {
                 await connection.StartAsync();
 
-                var result = await connection.InvokeAsync<string>(nameof(DynamicTestHub.SendMessage), originalMessage);
+                var tcs = new TaskCompletionSource<string>();
+                connection.On<string>("SendMessage", tcs.SetResult);
 
-                Assert.Equal(originalMessage, result);
+                await connection.InvokeAsync<string>(nameof(DynamicTestHub.SendMessage), originalMessage).OrTimeout();
+
+                Assert.Equal(originalMessage, await tcs.Task.OrTimeout());
             }
             finally
             {
-                await connection.DisposeAsync();
+                await connection.DisposeAsync().OrTimeout();
             }
         }
 
