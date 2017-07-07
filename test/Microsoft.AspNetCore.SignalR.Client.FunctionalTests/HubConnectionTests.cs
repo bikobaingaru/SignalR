@@ -45,6 +45,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
                     app.UseSignalR(routes =>
                     {
                         routes.MapHub<TestHub>("hubs");
+                        routes.MapHub<DynamicTestHub>("dynamic");
                     });
                 });
             _testServer = new TestServer(webHostBuilder);
@@ -135,6 +136,55 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
                 connection.On<string>("Echo", tcs.SetResult);
 
                 await connection.InvokeAsync(nameof(TestHub.CallEcho), originalMessage).OrTimeout();
+
+                Assert.Equal(originalMessage, await tcs.Task.OrTimeout());
+            }
+            finally
+            {
+                await connection.DisposeAsync().OrTimeout();
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(HubProtocols))]
+        public async Task DynamicHubCanSendAndReceiveMessage(IHubProtocol protocol)
+        {
+            var loggerFactory = CreateLogger();
+            const string originalMessage = "SignalR";
+
+            var httpConnection = new HttpConnection(new Uri("http://test/dynamic"), TransportType.LongPolling, loggerFactory, _testServer.CreateHandler());
+            var connection = new HubConnection(httpConnection, protocol, loggerFactory);
+            try
+            {
+                await connection.StartAsync();
+
+                var result = await connection.InvokeAsync<string>(nameof(DynamicTestHub.Echo), originalMessage);
+
+                Assert.Equal(originalMessage, result);
+            }
+            finally
+            {
+                await connection.DisposeAsync();
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(HubProtocols))]
+        public async Task DynamicHubCanInvokeClientMethodFromServer(IHubProtocol protocol)
+        {
+            var loggerFactory = CreateLogger();
+            const string originalMessage = "SignalR";
+
+            var httpConnection = new HttpConnection(new Uri("http://test/dynamic"), TransportType.LongPolling, loggerFactory, _testServer.CreateHandler());
+            var connection = new HubConnection(httpConnection, protocol, loggerFactory);
+            try
+            {
+                await connection.StartAsync();
+
+                var tcs = new TaskCompletionSource<string>();
+                connection.On<string>("Echo", tcs.SetResult);
+
+                await connection.InvokeAsync(nameof(DynamicTestHub.CallEcho), originalMessage).OrTimeout();
 
                 Assert.Equal(originalMessage, await tcs.Task.OrTimeout());
             }
@@ -237,6 +287,24 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             public IObservable<string> Stream()
             {
                 return new[] { "a", "b", "c" }.ToObservable();
+            }
+        }
+
+        public class DynamicTestHub : DynamicHub
+        {
+            public string HelloWorld()
+            {
+                return "Hello World!";
+            }
+
+            public string Echo(string message)
+            {
+                return message;
+            }
+
+            public async Task CallEcho(string message)
+            {
+                await Clients.Client(Context.ConnectionId).Echo(message);
             }
         }
     }
