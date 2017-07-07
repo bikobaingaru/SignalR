@@ -148,7 +148,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
 
         [Theory]
         [MemberData(nameof(HubProtocols))]
-        public async Task DynamicHubCanSendAndReceiveMessage(IHubProtocol protocol)
+        public async Task DynamicHubFixedMessage(IHubProtocol protocol)
         {
             var loggerFactory = CreateLogger();
             const string originalMessage = "SignalR";
@@ -171,7 +171,33 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
 
         [Theory]
         [MemberData(nameof(HubProtocols))]
-        public async Task DynamicHubCanInvokeClientMethodFromServer(IHubProtocol protocol)
+        public async Task DynamicHubCanReceiveMessage(IHubProtocol protocol)
+        {
+            var loggerFactory = CreateLogger();
+            const string originalMessage = "Hello";
+
+            var httpConnection = new HttpConnection(new Uri("http://test/dynamic"), TransportType.LongPolling, loggerFactory, _testServer.CreateHandler());
+            var connection = new HubConnection(httpConnection, protocol, loggerFactory);
+            try
+            {
+                await connection.StartAsync();
+
+                var tcs = new TaskCompletionSource<string>();
+                connection.On<string>("SendHello", tcs.SetResult);
+
+                await connection.InvokeAsync(nameof(DynamicTestHub.SendHello)).OrTimeout();
+
+                Assert.Equal(originalMessage, await tcs.Task.OrTimeout());
+            }
+            finally
+            {
+                await connection.DisposeAsync().OrTimeout();
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(HubProtocols))]
+        public async Task DynamicHubCanSendAndReceiveMessage(IHubProtocol protocol)
         {
             var loggerFactory = CreateLogger();
             const string originalMessage = "SignalR";
@@ -182,16 +208,13 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             {
                 await connection.StartAsync();
 
-                var tcs = new TaskCompletionSource<string>();
-                connection.On<string>("Echo", tcs.SetResult);
+                var result = await connection.InvokeAsync<string>(nameof(DynamicTestHub.SendMessage), originalMessage);
 
-                await connection.InvokeAsync(nameof(DynamicTestHub.CallEcho), originalMessage).OrTimeout();
-
-                Assert.Equal(originalMessage, await tcs.Task.OrTimeout());
+                Assert.Equal(originalMessage, result);
             }
             finally
             {
-                await connection.DisposeAsync().OrTimeout();
+                await connection.DisposeAsync();
             }
         }
 
@@ -293,9 +316,14 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
 
         public class DynamicTestHub : DynamicHub
         {
-            public string HelloWorld()
+            public Task SendHello()
             {
-                return "Hello World!";
+                return Clients.All.SendHello("Hello");
+            }
+
+            public Task SendMessage(string message)
+            {
+                return Clients.All.SendMessage(message);
             }
 
             public string Echo(string message)
