@@ -22,6 +22,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
         private readonly ServerSentEventsMessageParser _parser = new ServerSentEventsMessageParser();
 
         private Channel<byte[], SendMessage> _application;
+        private IPipeReader _pipeReader;
 
         public Task Running { get; private set; } = Task.CompletedTask;
 
@@ -77,11 +78,18 @@ namespace Microsoft.AspNetCore.Sockets.Client
             var stream = await response.Content.ReadAsStreamAsync();
 
             var pipelineReader = stream.AsPipelineReader();
+            // HACK: CancellationToken on ReadAsync is ignored
+            _pipeReader = pipelineReader;
             try
             {
                 while (true)
                 {
-                    var result = await pipelineReader.ReadAsync();
+                    var result = await pipelineReader.ReadAsync(cancellationToken);
+                    if (result.IsCancelled)
+                    {
+                        break;
+                    }
+
                     var input = result.Buffer;
                     var consumed = input.Start;
                     var examined = input.End;
@@ -128,6 +136,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
             _logger.LogInformation("Transport {transportName} is stopping", nameof(ServerSentEventsTransport));
             _transportCts.Cancel();
             _application.Out.TryComplete();
+            _pipeReader.CancelPendingRead();
             await Running;
         }
     }
